@@ -14,6 +14,7 @@ from utils import weights_init_normal, parse_model_config
 def create_modules(module_defs: List[dict]) -> Tuple[dict, nn.ModuleList]:
     """
     Constructs module list of layer blocks from module configuration in module_defs
+
     :param module_defs: List of dictionaries with module definitions
     :return: Hyperparameters and pytorch module list
     """
@@ -187,11 +188,11 @@ class YOLOLayer(nn.Module):
         return torch.stack((xv, yv), 2).view((1, 1, ny, nx, 2)).float()
 
 
-class Detect_inator(nn.Module):
+class Detector_inator(nn.Module):
     """YOLOv3 object detection model"""
 
     def __init__(self, config_path):
-        super(Detect_inator, self).__init__()
+        super(Detector_inator, self).__init__()
         self.module_defs = parse_model_config(config_path)
         self.hyperparams, self.module_list = create_modules(self.module_defs)
         self.yolo_layers = [layer[0]
@@ -315,13 +316,16 @@ class Detect_inator(nn.Module):
 
 
 def load_model(model_path, weights_path=None):
-    
     device = torch.device("cuda" if torch.cuda.is_available()
                           else "cpu")  # Select device for inference
-    model = Detect_inator(model_path).to(device)
+    model = Detector_inator(model_path).to(device)
+
     model.apply(weights_init_normal)
+
+    # If pretrained weights are specified, start from checkpoint or weight file
     if weights_path:
         if weights_path.endswith(".pth"):
+            # Load checkpoint weights
             model.load_state_dict(torch.load(weights_path, map_location=device))
         else:
             model.load_inator_weights(weights_path)

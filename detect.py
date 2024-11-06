@@ -15,7 +15,7 @@ import torchvision.transforms as transforms
 from torch.utils.data import DataLoader
 from torch.autograd import Variable
 
-from model import load_model
+from Detect_inator import load_model
 from utils import load_classes, rescale_boxes, non_max_suppression, print_environment_info
 from utils import ImageFolder
 from utils import Resize, DEFAULT_TRANSFORMS
