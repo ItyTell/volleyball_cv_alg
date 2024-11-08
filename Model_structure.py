@@ -95,7 +95,7 @@ class YOLOLayer(nn.Module):
 
 def convolution(module_id: int, in_channels: int, filters: int, size: int, stride: int, pad: int, batch_normalize: bool, activation: str) -> nn.Sequential:
     modules = nn.Sequential()
-    modules.add_module("conv_{}".format(module_id), nn.Conv2d(in_channels=in_channels, out_channels=filters, kernel_size=size, stride=stride, padding=(pad, pad), bias=not batch_normalize))
+    modules.add_module("conv_{}".format(module_id), nn.Conv2d(in_channels=in_channels, out_channels=filters, kernel_size=size, stride=stride, padding=pad, bias=not batch_normalize))
     if batch_normalize:
         modules.add_module("batch_norm_{}".format(module_id), nn.BatchNorm2d(filters, momentum=0.1, eps=1e-05))
     if activation == "leaky":

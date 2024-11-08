@@ -106,6 +106,7 @@ class Detector_inator(nn.Module):
                     ptr += num_b
                 # Load conv. weights
                 num_w = conv_layer.weight.numel()
+                print(module)
                 conv_w = torch.from_numpy(
                     weights[ptr: ptr + num_w]).view_as(conv_layer.weight)
                 conv_layer.weight.data.copy_(conv_w)
