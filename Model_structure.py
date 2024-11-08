@@ -89,7 +89,9 @@ class YOLOLayer(nn.Module):
         return torch.stack((xv, yv), 2).view((1, 1, ny, nx, 2)).float()
 
 
-# function for adding layers
+# function for adding layers 
+
+# переделай чтоб функция сама добавляла модули в module_list
 
 def convolution(module_id: int, in_channels: int, filters: int, size: int, stride: int, pad: int, batch_normalize: bool, activation: str) -> nn.Sequential:
     modules = nn.Sequential()
@@ -100,21 +102,29 @@ def convolution(module_id: int, in_channels: int, filters: int, size: int, strid
         modules.add_module("leaky_{}".format(module_id), nn.LeakyReLU(0.1))
     return modules
 
-def shortcut(last_modules, module_id: int):
-    last_modules.add_module("shortcut_{}".format(module_id), nn.Sequential())
+def shortcut(module_id: int):
+    modules = nn.Sequential()
+    modules.add_module("shortcut_{}".format(module_id), nn.Sequential())
+    return modules
 
 
-def upsample(last_modules: nn.Sequential, module_id: int, stride: int):
+def upsample(module_id: int, stride: int):
+    modules = nn.Sequential()
     upsample = Upsample(scale_factor=stride, mode="nearest")
-    last_modules.add_module("upsample_{}".format(module_id), upsample)
+    modules.add_module("upsample_{}".format(module_id), upsample)
+    return modules
 
-def route(last_modules: nn.Sequential, module_id: int):
-    last_modules.add_module("route_{}".format(module_id), nn.Sequential())
+def route(module_id: int):
+    modules = nn.Sequential()
+    modules.add_module("route_{}".format(module_id), nn.Sequential())
+    return modules
 
-def yolo(last_modules: nn.Sequential, module_id: int, mask: List[int], anchors: List[Tuple[int, int]], num_classes: int):
+def yolo(module_id: int, mask: List[int], anchors: List[Tuple[int, int]], num_classes: int):
+    modules = nn.Sequential()
     anchors = [anchors[i] for i in mask]
     yolo_layer = YOLOLayer(anchors, num_classes, False)
-    last_modules.add_module("yolo_{}".format(module_id), yolo_layer)
+    modules.add_module("yolo_{}".format(module_id), yolo_layer)
+    return modules
 
 
 
@@ -159,7 +169,8 @@ def create_modules() -> Tuple[dict, nn.ModuleList]:
     module_list.append(module)
     output_filters.append(64)
 
-    shortcut(module, 4)
+    module = shortcut(4)
+    module_list.append(module)
     output_filters.append(output_filters[1:][-3])
 
     module = convolution(module_id=5, in_channels=output_filters[-1], filters=128, size=3, stride=2, pad=1, batch_normalize=True, activation="leaky")
@@ -174,7 +185,8 @@ def create_modules() -> Tuple[dict, nn.ModuleList]:
     module_list.append(module)
     output_filters.append(128)
 
-    shortcut(module, 8)
+    module = shortcut(8)
+    module_list.append(module)
     output_filters.append(output_filters[1:][-3])
 
     module = convolution(module_id=9, in_channels=output_filters[-1], filters=64, size=1, stride=1, pad=1, batch_normalize=True, activation="leaky")
@@ -185,7 +197,8 @@ def create_modules() -> Tuple[dict, nn.ModuleList]:
     module_list.append(module)
     output_filters.append(128)
 
-    shortcut(module, 11)
+    module = shortcut(11)
+    module_list.append(module)
     output_filters.append(output_filters[1:][-3])
 
     module = convolution(module_id=12, in_channels=output_filters[-1], filters=256, size=3, stride=2, pad=1, batch_normalize=True, activation="leaky")
@@ -200,7 +213,8 @@ def create_modules() -> Tuple[dict, nn.ModuleList]:
     module_list.append(module)
     output_filters.append(256)
 
-    shortcut(module, 15)
+    module = shortcut(15)
+    module_list.append(module)
     output_filters.append(output_filters[1:][-3])
 
     module = convolution(module_id=16, in_channels=output_filters[-1], filters=128, size=1, stride=1, pad=1, batch_normalize=True, activation="leaky")
@@ -211,7 +225,8 @@ def create_modules() -> Tuple[dict, nn.ModuleList]:
     module_list.append(module)
     output_filters.append(256)
 
-    shortcut(module, 18)
+    module = shortcut(18)
+    module_list.append(module)
     output_filters.append(output_filters[1:][-3])
 
     module = convolution(module_id=19, in_channels=output_filters[-1], filters=128, size=1, stride=1, pad=1, batch_normalize=True, activation="leaky")
@@ -222,7 +237,8 @@ def create_modules() -> Tuple[dict, nn.ModuleList]:
     module_list.append(module)
     output_filters.append(256)
 
-    shortcut(module, 21)
+    module = shortcut(21)
+    module_list.append(module)
     output_filters.append(output_filters[1:][-3])
 
     module = convolution(module_id=22, in_channels=output_filters[-1], filters=128, size=1, stride=1, pad=1, batch_normalize=True, activation="leaky")
@@ -233,7 +249,8 @@ def create_modules() -> Tuple[dict, nn.ModuleList]:
     module_list.append(module)
     output_filters.append(256)
 
-    shortcut(module, 24)
+    module = shortcut(24)
+    module_list.append(module)
     output_filters.append(output_filters[1:][-3])
 
     module = convolution(module_id=25, in_channels=output_filters[-1], filters=128, size=1, stride=1, pad=1, batch_normalize=True, activation="leaky")
@@ -244,7 +261,8 @@ def create_modules() -> Tuple[dict, nn.ModuleList]:
     module_list.append(module)
     output_filters.append(256)
 
-    shortcut(module, 27)
+    module = shortcut(27)
+    module_list.append(module)
     output_filters.append(output_filters[1:][-3])
 
     module = convolution(module_id=28, in_channels=output_filters[-1], filters=128, size=1, stride=1, pad=1, batch_normalize=True, activation="leaky")
@@ -255,7 +273,8 @@ def create_modules() -> Tuple[dict, nn.ModuleList]:
     module_list.append(module)
     output_filters.append(256)
 
-    shortcut(module, 30)
+    module = shortcut(30)
+    module_list.append(module)
     output_filters.append(output_filters[1:][-3])
 
     module = convolution(module_id=31, in_channels=output_filters[-1], filters=128, size=1, stride=1, pad=1, batch_normalize=True, activation="leaky")
@@ -266,7 +285,8 @@ def create_modules() -> Tuple[dict, nn.ModuleList]:
     module_list.append(module)
     output_filters.append(256)
 
-    shortcut(module, 33)
+    module = shortcut(33)
+    module_list.append(module)
     output_filters.append(output_filters[1:][-3])
 
     module = convolution(module_id=34, in_channels=output_filters[-1], filters=128, size=1, stride=1, pad=1, batch_normalize=True, activation="leaky")
@@ -277,7 +297,8 @@ def create_modules() -> Tuple[dict, nn.ModuleList]:
     module_list.append(module)
     output_filters.append(256)
 
-    shortcut(module, 36)
+    module = shortcut(36)
+    module_list.append(module)
     output_filters.append(output_filters[1:][-3])
 
     module = convolution(module_id=37, in_channels=output_filters[-1], filters=512, size=3, stride=2, pad=1, batch_normalize=True, activation="leaky")
@@ -292,7 +313,8 @@ def create_modules() -> Tuple[dict, nn.ModuleList]:
     module_list.append(module)
     output_filters.append(512)
 
-    shortcut(module, 40)
+    module = shortcut(40)
+    module_list.append(module)
     output_filters.append(output_filters[1:][-3])
 
     module = convolution(module_id=41, in_channels=output_filters[-1], filters=256, size=1, stride=1, pad=1, batch_normalize=True, activation="leaky")
@@ -303,7 +325,8 @@ def create_modules() -> Tuple[dict, nn.ModuleList]:
     module_list.append(module)
     output_filters.append(512)
 
-    shortcut(module, 43)
+    module = shortcut(43)
+    module_list.append(module)
     output_filters.append(output_filters[1:][-3])
 
     module = convolution(module_id=44, in_channels=output_filters[-1], filters=256, size=1, stride=1, pad=1, batch_normalize=True, activation="leaky")
@@ -314,7 +337,8 @@ def create_modules() -> Tuple[dict, nn.ModuleList]:
     module_list.append(module)
     output_filters.append(512)
     
-    shortcut(module, 46)
+    module = shortcut(46)
+    module_list.append(module)
     output_filters.append(output_filters[1:][-3])
 
     module = convolution(module_id=47, in_channels=output_filters[-1], filters=256, size=1, stride=1, pad=1, batch_normalize=True, activation="leaky")
@@ -325,7 +349,8 @@ def create_modules() -> Tuple[dict, nn.ModuleList]:
     module_list.append(module)
     output_filters.append(512)
 
-    shortcut(module, 49)
+    module = shortcut(49)
+    module_list.append(module)
     output_filters.append(output_filters[1:][-3])
 
     module = convolution(module_id=50, in_channels=output_filters[-1], filters=256, size=1, stride=1, pad=1, batch_normalize=True, activation="leaky")
@@ -336,7 +361,8 @@ def create_modules() -> Tuple[dict, nn.ModuleList]:
     module_list.append(module)
     output_filters.append(512)
 
-    shortcut(module, 52)
+    module = shortcut(52)
+    module_list.append(module)
     output_filters.append(output_filters[1:][-3])
 
     module = convolution(module_id=53, in_channels=output_filters[-1], filters=256, size=1, stride=1, pad=1, batch_normalize=True, activation="leaky")
@@ -346,7 +372,8 @@ def create_modules() -> Tuple[dict, nn.ModuleList]:
     module = convolution(module_id=54, in_channels=output_filters[-1], filters=512, size=3, stride=1, pad=1, batch_normalize=True, activation="leaky")
     module_list.append(module)
 
-    shortcut(module, 55)
+    module = shortcut(55)
+    module_list.append(module)
     output_filters.append(output_filters[1:][-3])
 
     module = convolution(module_id=56, in_channels=output_filters[-1], filters=256, size=1, stride=1, pad=1, batch_normalize=True, activation="leaky")
@@ -357,7 +384,8 @@ def create_modules() -> Tuple[dict, nn.ModuleList]:
     module_list.append(module)
     output_filters.append(512)
 
-    shortcut(module, 58)
+    module = shortcut(58)
+    module_list.append(module)
     output_filters.append(output_filters[1:][-3])
 
     module = convolution(module_id=59, in_channels=output_filters[-1], filters=256, size=1, stride=1, pad=1, batch_normalize=True, activation="leaky")
@@ -368,7 +396,8 @@ def create_modules() -> Tuple[dict, nn.ModuleList]:
     module_list.append(module)
     output_filters.append(512)
 
-    shortcut(module, 61)
+    module = shortcut(61)
+    module_list.append(module)
     output_filters.append(output_filters[1:][-3])
 
     module = convolution(module_id=62, in_channels=output_filters[-1], filters=1024, size=3, stride=2, pad=1, batch_normalize=True, activation="leaky")
@@ -383,7 +412,8 @@ def create_modules() -> Tuple[dict, nn.ModuleList]:
     module_list.append(module)
     output_filters.append(1024)
 
-    shortcut(module, 65)
+    module = shortcut(65)
+    module_list.append(module)
     output_filters.append(output_filters[1:][-3])
 
     module = convolution(module_id=66, in_channels=output_filters[-1], filters=512, size=1, stride=1, pad=1, batch_normalize=True, activation="leaky")
@@ -394,7 +424,8 @@ def create_modules() -> Tuple[dict, nn.ModuleList]:
     module_list.append(module)
     output_filters.append(1024)
 
-    shortcut(module, 68)
+    module = shortcut(68)
+    module_list.append(module)
     output_filters.append(output_filters[1:][-3])
 
     module = convolution(module_id=69, in_channels=output_filters[-1], filters=512, size=1, stride=1, pad=1, batch_normalize=True, activation="leaky")
@@ -405,7 +436,8 @@ def create_modules() -> Tuple[dict, nn.ModuleList]:
     module_list.append(module)
     output_filters.append(1024)
 
-    shortcut(module, 71)
+    module = shortcut(71)
+    module_list.append(module)
     output_filters.append(output_filters[1:][-3])
 
     module = convolution(module_id=72, in_channels=output_filters[-1], filters=512, size=1, stride=1, pad=1, batch_normalize=True, activation="leaky")
@@ -416,7 +448,8 @@ def create_modules() -> Tuple[dict, nn.ModuleList]:
     module_list.append(module)
     output_filters.append(1024)
 
-    shortcut(module, 74)
+    module = shortcut(74)
+    module_list.append(module)
     output_filters.append(output_filters[1:][-3])
 
     module = convolution(module_id=75, in_channels=output_filters[-1], filters=512, size=1, stride=1, pad=1, batch_normalize=True, activation="leaky")
@@ -447,18 +480,22 @@ def create_modules() -> Tuple[dict, nn.ModuleList]:
     module_list.append(module)
     output_filters.append(255)
 
-    yolo(module, 82, mask=[6, 7, 8], anchors=[(10, 13), (16, 30), (33, 23), (30, 61), (62, 45), (59, 119), (116, 90), (156, 198), (373, 326)], num_classes=80)
+    module = yolo(82, mask=[6, 7, 8], anchors=[(10, 13), (16, 30), (33, 23), (30, 61), (62, 45), (59, 119), (116, 90), (156, 198), (373, 326)], num_classes=80)
+    module_list.append(module)
 
-    route(module, 83)
+    module = route(83)
+    module_list.append(module)
     output_filters.append(sum([output_filters[1:][i] for i in [-4]]))
 
     module = convolution(module_id=84, in_channels=output_filters[-1], filters=256, size=1, stride=1, pad=1, batch_normalize=True, activation="leaky")
     module_list.append(module)
     output_filters.append(256)
 
-    upsample(module, 85, stride=2)
+    module  =  upsample(85, stride=2)
+    module_list.append(module)
 
-    route(module, 87)
+    module = route(87)
+    module_list.append(module)
     output_filters.append(sum([output_filters[1:][i] for i in [-1, 61]]))
 
 
@@ -490,18 +527,22 @@ def create_modules() -> Tuple[dict, nn.ModuleList]:
     module_list.append(module)
     output_filters.append(255)
 
-    yolo(module, 94, mask=[3, 4, 5], anchors=[(10, 13), (16, 30), (33, 23), (30, 61), (62, 45), (59, 119), (116, 90), (156, 198), (373, 326)], num_classes=80)
+    module = yolo(94, mask=[3, 4, 5], anchors=[(10, 13), (16, 30), (33, 23), (30, 61), (62, 45), (59, 119), (116, 90), (156, 198), (373, 326)], num_classes=80)
+    module_list.append(module)
 
-    route(module, 95)
+    module = route(95)
+    module_list.append(module)
     output_filters.append(sum([output_filters[1:][i] for i in [-4]]))
 
     module = convolution(module_id=96, in_channels=output_filters[-1], filters=128, size=1, stride=1, pad=1, batch_normalize=True, activation="leaky")
     module_list.append(module)
     output_filters.append(128)
 
-    upsample(module, 97, stride=2)
+    module = upsample(97, stride=2)
+    module_list.append(module)
 
-    route(module, 98)
+    module = route(98)
+    module_list.append(module)
     output_filters.append(sum([output_filters[1:][i] for i in [-1, 36]]))
 
     module = convolution(module_id=99, in_channels=output_filters[-1], filters=128, size=1, stride=1, pad=1, batch_normalize=True, activation="leaky")
@@ -532,7 +573,8 @@ def create_modules() -> Tuple[dict, nn.ModuleList]:
     module_list.append(module)
     output_filters.append(255)
 
-    yolo(module, 106, mask=[0, 1, 2], anchors=[(10, 13), (16, 30), (33, 23), (30, 61), (62, 45), (59, 119), (116, 90), (156, 198), (373, 326)], num_classes=80)
+    module = yolo(106, mask=[0, 1, 2], anchors=[(10, 13), (16, 30), (33, 23), (30, 61), (62, 45), (59, 119), (116, 90), (156, 198), (373, 326)], num_classes=80)
+    module_list.append(module)
 
     return hyperparams, module_list
 
