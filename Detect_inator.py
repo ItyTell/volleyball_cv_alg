@@ -58,6 +58,7 @@ class Detector_inator(nn.Module):
 
         # Establish cutoff for loading backbone weights
         cutoff = None
+        print(weights.shape)
         # If the weights file has a cutoff, we can find out about it by looking at the filename
         # examples: darknet53.conv.74 -> cutoff is 74
         filename = os.path.basename(weights_path)
@@ -107,6 +108,10 @@ class Detector_inator(nn.Module):
                 # Load conv. weights
                 num_w = conv_layer.weight.numel()
                 print(module)
+                print(num_w)
+                print(weights[ptr: ptr + num_w].shape)
+                print(conv_layer.weight[ptr: ptr + num_w].shape)
+                print("_______________")
                 conv_w = torch.from_numpy(
                     weights[ptr: ptr + num_w]).view_as(conv_layer.weight)
                 conv_layer.weight.data.copy_(conv_w)
