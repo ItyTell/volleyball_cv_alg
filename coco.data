@@ -1,0 +1,4 @@
+classes = 1
+train = /mnt/c/Users/nickk/volleyball_cv_alg/dataset/train.txt
+valid = /mnt/c/Users/nickk/volleyball_cv_alg/dataset/valid.txt
+names = /mnt/c/Users/nickk/volleyball_cv_alg/classes.names

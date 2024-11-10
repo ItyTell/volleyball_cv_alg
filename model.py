@@ -242,15 +242,10 @@ class Detector_inator(nn.Module):
             except ValueError:
                 pass
 
-        skip_layers = {81, 93, 105}
         ptr = 0
         for i, (module_def, module) in enumerate(zip(self.module_defs, self.module_list)):
             if i == cutoff:
                 break
-            if i in skip_layers:
-                ptr += 255
-                print(f"Skipping {module} layer")
-                continue
             if module_def["type"] == "convolutional":
                 conv_layer = module[0]
                 if module_def["batch_normalize"]:
