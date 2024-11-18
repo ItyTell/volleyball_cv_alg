@@ -26,21 +26,6 @@ from torchsummary import summary
 
 
 def _create_data_loader(img_path, batch_size, img_size, n_cpu, multiscale_training=False):
-    """Creates a DataLoader for training.
-
-    :param img_path: Path to file containing all paths to training images.
-    :type img_path: str
-    :param batch_size: Size of each image batch
-    :type batch_size: int
-    :param img_size: Size of each image dimension for yolo
-    :type img_size: int
-    :param n_cpu: Number of cpu threads to use during batch generation
-    :type n_cpu: int
-    :param multiscale_training: Scale images to different sizes randomly
-    :type multiscale_training: bool
-    :return: Returns DataLoader
-    :rtype: DataLoader
-    """
     dataset = ListDataset(
         img_path,
         img_size=img_size,
@@ -80,13 +65,11 @@ def run():
     if args.seed != -1:
         provide_determinism(args.seed)
 
-    logger = Logger(args.logdir)  # Tensorboard logger
+    logger = Logger(args.logdir)  
 
-    # Create output directories if missing
     os.makedirs("output", exist_ok=True)
     os.makedirs("checkpoints", exist_ok=True)
 
-    # Get data configuration
     data_config = parse_data_config(args.data)
     train_path = data_config["train"]
     valid_path = data_config["valid"]
@@ -99,7 +82,6 @@ def run():
 
     model = load_model(args.model, args.pretrained_weights)
 
-    # Print model
     if args.verbose:
         summary(model, input_size=(3, model.hyperparams['height'], model.hyperparams['height']))
 
@@ -109,7 +91,6 @@ def run():
     # Create Dataloader
     # #################
 
-    # Load training dataloader
     dataloader = _create_data_loader(
         train_path,
         mini_batch_size,
@@ -117,7 +98,6 @@ def run():
         args.n_cpu,
         args.multiscale_training)
 
-    # Load validation dataloader
     validation_dataloader = _create_validation_data_loader(
         valid_path,
         mini_batch_size,
@@ -145,14 +125,11 @@ def run():
     else:
         print("Unknown optimizer. Please choose between (adam, sgd).")
 
-    # skip epoch zero, because then the calculations for when to evaluate/checkpoint makes more intuitive sense
-    # e.g. when you stop after 30 epochs and evaluate every 10 epochs then the evaluations happen after: 10,20,30
-    # instead of: 0, 10, 20
     for epoch in range(1, args.epochs+1):
 
         print("\n---- Training Model ----")
 
-        model.train()  # Set model to training mode
+        model.train() 
 
         for batch_i, (_, imgs, targets) in enumerate(tqdm.tqdm(dataloader, desc=f"Training Epoch {epoch}")):
             batches_done = len(dataloader) * epoch + batch_i
@@ -171,26 +148,18 @@ def run():
             ###############
 
             if batches_done % model.hyperparams['subdivisions'] == 0:
-                # Adapt learning rate
-                # Get learning rate defined in cfg
                 lr = model.hyperparams['learning_rate']
                 if batches_done < model.hyperparams['burn_in']:
-                    # Burn in
                     lr *= (batches_done / model.hyperparams['burn_in'])
                 else:
-                    # Set and parse the learning rate to the steps defined in the cfg
                     for threshold, value in model.hyperparams['lr_steps']:
                         if batches_done > threshold:
                             lr *= value
-                # Log the learning rate
                 logger.scalar_summary("train/learning_rate", lr, batches_done)
-                # Set learning rate
                 for g in optimizer.param_groups:
                     g['lr'] = lr
 
-                # Run optimizer
                 optimizer.step()
-                # Reset gradients
                 optimizer.zero_grad()
 
             # ############
@@ -207,7 +176,6 @@ def run():
                         ["Batch loss", to_cpu(loss).item()],
                     ]).table)
 
-            # Tensorboard logging
             tensorboard_log = [
                 ("train/iou_loss", float(loss_components[0])),
                 ("train/obj_loss", float(loss_components[1])),
@@ -221,7 +189,6 @@ def run():
         # Save progress
         # #############
 
-        # Save model to checkpoint file
         if epoch % args.checkpoint_interval == 0:
             checkpoint_path = f"checkpoints/yolov3_ckpt_{epoch}.pth"
             print(f"---- Saving checkpoint to: '{checkpoint_path}' ----")

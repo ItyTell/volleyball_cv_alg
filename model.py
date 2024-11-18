@@ -12,12 +12,6 @@ from utils import weights_init_normal, parse_model_config
 
 
 def create_modules(module_defs: List[dict]) -> Tuple[dict, nn.ModuleList]:
-    """
-    Constructs module list of layer blocks from module configuration in module_defs
-
-    :param module_defs: List of dictionaries with module definitions
-    :return: Hyperparameters and pytorch module list
-    """
     hyperparams = module_defs.pop(0)
     hyperparams.update({
         'batch': int(hyperparams['batch']),
@@ -111,7 +105,6 @@ def create_modules(module_defs: List[dict]) -> Tuple[dict, nn.ModuleList]:
 
 
 class Upsample(nn.Module):
-    """ nn.Upsample is deprecated """
 
     def __init__(self, scale_factor, mode: str = "nearest"):
         super(Upsample, self).__init__()
@@ -124,16 +117,8 @@ class Upsample(nn.Module):
 
 
 class YOLOLayer(nn.Module):
-    """Detection layer"""
 
     def __init__(self, anchors: List[Tuple[int, int]], num_classes: int, new_coords: bool):
-        """
-        Create a YOLO layer
-
-        :param anchors: List of anchors
-        :param num_classes: Number of classes
-        :param new_coords: Whether to use the new coordinate format from YOLO V7
-        """
         super(YOLOLayer, self).__init__()
         self.num_anchors = len(anchors)
         self.num_classes = num_classes
@@ -141,7 +126,7 @@ class YOLOLayer(nn.Module):
         self.mse_loss = nn.MSELoss()
         self.bce_loss = nn.BCELoss()
         self.no = num_classes + 5  # number of outputs per anchor
-        self.grid = torch.zeros(1)  # TODO
+        self.grid = torch.zeros(1)  
 
         anchors = torch.tensor(list(chain(*anchors))).float().view(-1, 2)
         self.register_buffer('anchors', anchors)
@@ -150,12 +135,6 @@ class YOLOLayer(nn.Module):
         self.stride = None
 
     def forward(self, x: torch.Tensor, img_size: int) -> torch.Tensor:
-        """
-        Forward pass of the YOLO layer
-
-        :param x: Input tensor
-        :param img_size: Size of the input image
-        """
         stride = img_size // x.size(2)
         self.stride = stride
         bs, _, ny, nx = x.shape  # x(bs,255,20,20) to x(bs,3,20,20,85)
@@ -178,18 +157,11 @@ class YOLOLayer(nn.Module):
 
     @staticmethod
     def _make_grid(nx: int = 20, ny: int = 20) -> torch.Tensor:
-        """
-        Create a grid of (x, y) coordinates
-
-        :param nx: Number of x coordinates
-        :param ny: Number of y coordinates
-        """
         yv, xv = torch.meshgrid([torch.arange(ny), torch.arange(nx)], indexing='ij')
         return torch.stack((xv, yv), 2).view((1, 1, ny, nx, 2)).float()
 
 
 class Detector_inator(nn.Module):
-    """YOLOv3 object detection model"""
 
     def __init__(self, config_path):
         super(Detector_inator, self).__init__()
@@ -221,7 +193,6 @@ class Detector_inator(nn.Module):
         return yolo_outputs if self.training else torch.cat(yolo_outputs, 1)
 
     def load_inator_weights(self, weights_path):
-        """Parses and loads the weights stored in 'weights_path'"""
 
         # Open the weights file
         with open(weights_path, "rb") as f:
@@ -287,10 +258,6 @@ class Detector_inator(nn.Module):
                 ptr += num_w
 
     def save_inator_weights(self, path, cutoff=-1):
-        """
-            @:param path    - path of the new weights file
-            @:param cutoff  - save layers between 0 and cutoff (cutoff = -1 -> all are saved)
-        """
         fp = open(path, "wb")
         self.header_info[3] = self.seen
         self.header_info.tofile(fp)

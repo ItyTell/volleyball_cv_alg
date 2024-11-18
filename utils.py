@@ -759,19 +759,16 @@ def build_targets(p, targets, model):
 
 class Logger(object):
     def __init__(self, log_dir, log_hist=True):
-        """Create a summary writer logging to log_dir."""
-        if log_hist:    # Check a new folder for each log should be dreated
+        if log_hist:    
             log_dir = os.path.join(
                 log_dir,
                 datetime.datetime.now().strftime("%Y_%m_%d__%H_%M_%S"))
         self.writer = SummaryWriter(log_dir)
 
     def scalar_summary(self, tag, value, step):
-        """Log a scalar variable."""
         self.writer.add_scalar(tag, value, step)
 
     def list_of_scalars_summary(self, tag_value_pairs, step):
-        """Log scalar variables."""
         for tag, value in tag_value_pairs:
             self.writer.add_scalar(tag, value, step)
 
@@ -787,11 +784,8 @@ ImageFile.LOAD_TRUNCATED_IMAGES = True
 def pad_to_square(img, pad_value):
     c, h, w = img.shape
     dim_diff = np.abs(h - w)
-    # (upper / left) padding and (lower / right) padding
     pad1, pad2 = dim_diff // 2, dim_diff - dim_diff // 2
-    # Determine padding
     pad = (0, 0, pad1, pad2) if h <= w else (pad1, pad2, 0, 0)
-    # Add padding
     img = F.pad(img, pad, "constant", value=pad_value)
 
     return img, pad
@@ -814,10 +808,8 @@ class ImageFolder(Dataset):
             Image.open(img_path).convert('RGB'),
             dtype=np.uint8)
 
-        # Label Placeholder
         boxes = np.zeros((1, 5))
 
-        # Apply transforms
         if self.transform:
             img, _ = self.transform((img, boxes))
 
@@ -870,7 +862,6 @@ class ListDataset(Dataset):
         try:
             label_path = self.label_files[index % len(self.img_files)].rstrip()
 
-            # Ignore warning if file is empty
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore")
                 boxes = np.loadtxt(label_path).reshape(-1, 5)
@@ -893,20 +884,16 @@ class ListDataset(Dataset):
     def collate_fn(self, batch):
         self.batch_count += 1
 
-        # Drop invalid images
         batch = [data for data in batch if data is not None]
 
         paths, imgs, bb_targets = list(zip(*batch))
 
-        # Selects new image size every tenth batch
         if self.multiscale and self.batch_count % 10 == 0:
             self.img_size = random.choice(
                 range(self.min_size, self.max_size + 1, 32))
 
-        # Resize images to input shape
         imgs = torch.stack([resize(img, self.img_size) for img in imgs])
 
-        # Add sample index to targets
         for i, boxes in enumerate(bb_targets):
             boxes[:, 0] = i
         bb_targets = torch.cat(bb_targets, 0)
